@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Metal Syntax Highlighting Demo (Standalone)</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+            padding: 20px; 
+            background: #f5f5f5;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 { color: #333; }
+        h2 { color: #555; border-bottom: 2px solid #007aff; padding-bottom: 10px; }
+        .status { 
+            padding: 15px; 
+            margin: 20px 0; 
+            border-radius: 5px; 
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .success { background: #d4edda; color: #155724; border: 2px solid #28a745; }
+        .error { background: #f8d7da; color: #721c24; border: 2px solid #dc3545; }
+        .warning { background: #fff3cd; color: #856404; border: 2px solid #ffc107; }
+        .demo-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        pre { 
+            background: #f6f8fa;
+            padding: 15px; 
+            border-radius: 5px;
+            overflow-x: auto;
+            border: 1px solid #e1e4e8;
+        }
+        code {
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        /* Default theme colors - inline version */
+        .hljs {
+            display: block;
+            overflow-x: auto;
+            padding: 0.5em;
+            color: #333;
+            background: #f8f8f8;
+        }
+        .hljs-comment { color: #998; font-style: italic; }
+        .hljs-keyword { color: #333; font-weight: bold; }
+        .hljs-built_in { color: #0086b3; }
+        .hljs-type { color: #458; font-weight: bold; }
+        .hljs-literal { color: #0086b3; }
+        .hljs-number { color: #099; }
+        .hljs-string { color: #d14; }
+        .hljs-meta { color: #999; font-weight: bold; }
+        .hljs-meta .hljs-keyword { color: #999; font-weight: bold; }
+        .hljs-meta .hljs-string { color: #d14; }
+        .hljs-function .hljs-title { color: #900; font-weight: bold; }
+        .hljs-title.class_ { color: #458; font-weight: bold; }
+        .hljs-params { color: #333; }
+        .hljs-addition { color: #55a532; background-color: #eaffea; }
+        .hljs-deletion { color: #bd2c00; background-color: #ffecec; }
+        
+        .info { 
+            background: #e7f3ff; 
+            padding: 10px; 
+            border-radius: 5px; 
+            margin: 10px 0;
+            border-left: 4px solid #007aff;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 Metal Syntax Highlighting Demo</h1>
+    
+    <div id="status" class="status warning">Checking highlight.js...</div>
+    
+    <div class="info">
+        <strong>📌 Note:</strong> This is a standalone version. If you see syntax highlighting below, it's working! 
+        If the code is plain (no colors), there may be an issue loading the highlight.js library.
+    </div>
+
+    <div class="demo-section">
+        <h2>🔷 Vertex Shader</h2>
+        <pre><code class="language-metal">#include &lt;metal_stdlib&gt;
+using namespace metal;
+
+struct VertexIn {
+    float3 position [[attribute(0)]];
+    float3 normal [[attribute(1)]];
+    float2 texCoord [[attribute(2)]];
+};
+
+struct VertexOut {
+    float4 position [[position]];
+    float3 worldNormal;
+    float2 texCoord;
+};
+
+vertex VertexOut vertexShader(VertexIn in [[stage_in]],
+                               constant float4x4 &modelMatrix [[buffer(1)]],
+                               constant float4x4 &viewProjectionMatrix [[buffer(2)]]) {
+    VertexOut out;
+    float4 worldPosition = modelMatrix * float4(in.position, 1.0);
+    out.position = viewProjectionMatrix * worldPosition;
+    out.worldNormal = normalize((modelMatrix * float4(in.normal, 0.0)).xyz);
+    out.texCoord = in.texCoord;
+    return out;
+}</code></pre>
+    </div>
+
+    <div class="demo-section">
+        <h2>🔷 Fragment Shader</h2>
+        <pre><code class="language-metal">fragment half4 fragmentShader(VertexOut in [[stage_in]],
+                               texture2d&lt;half&gt; colorTexture [[texture(0)]],
+                               sampler textureSampler [[sampler(0)]],
+                               constant float3 &lightDirection [[buffer(0)]]) {
+    half4 colorSample = colorTexture.sample(textureSampler, in.texCoord);
+    
+    float3 normal = normalize(in.worldNormal);
+    float diffuseIntensity = saturate(dot(normal, -lightDirection));
+    
+    half3 diffuseColor = colorSample.rgb * diffuseIntensity;
+    return half4(diffuseColor, colorSample.a);
+}</code></pre>
+    </div>
+
+    <div class="demo-section">
+        <h2>🔷 Compute Kernel</h2>
+        <pre><code class="language-metal">kernel void computeShader(device float4 *outBuffer [[buffer(0)]],
+                          constant float &time [[buffer(1)]],
+                          uint2 gid [[thread_position_in_grid]]) {
+    uint index = gid.x + gid.y * 1024;
+    float value = sin(time + float(index) * 0.1h);
+    outBuffer[index] = float4(value, value, value, 1.0f);
+}
+
+// Parallel reduction example
+kernel void parallelSum(device float *input [[buffer(0)]],
+                        device float *output [[buffer(1)]],
+                        threadgroup float *shared [[threadgroup(0)]],
+                        uint tid [[thread_position_in_threadgroup]],
+                        uint gid [[threadgroup_position_in_grid]],
+                        uint tsize [[threads_per_threadgroup]]) {
+    // Load data into shared memory
+    uint globalId = gid * tsize + tid;
+    shared[tid] = input[globalId];
+    
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+    
+    // Parallel reduction
+    for (uint stride = tsize / 2; stride > 0; stride /= 2) {
+        if (tid &lt; stride) {
+            shared[tid] += shared[tid + stride];
+        }
+        threadgroup_barrier(mem_flags::mem_threadgroup);
+    }
+    
+    // Write result
+    if (tid == 0) {
+        output[gid] = shared[0];
+    }
+}</code></pre>
+    </div>
+
+    <!-- Load highlight.js from the build directory -->
+    <script src="build/highlight.js"></script>
+    <script>
+        const statusDiv = document.getElementById('status');
+        
+        try {
+            // Check if hljs is loaded
+            if (typeof hljs === 'undefined') {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = '❌ <strong>ERROR:</strong> highlight.js not loaded<br><small>Make sure build/highlight.js exists</small>';
+                console.error('highlight.js not found');
+            }
+            // Check if metal language is registered
+            else if (!hljs.getLanguage('metal')) {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = '❌ <strong>ERROR:</strong> Metal language not found in build<br><small>Run: node ./tools/build.js -t browser :common metal</small>';
+                console.error('Metal language not registered');
+                console.log('Available languages:', hljs.listLanguages().join(', '));
+            }
+            else {
+                // Highlight all code blocks
+                hljs.highlightAll();
+                
+                statusDiv.className = 'status success';
+                statusDiv.innerHTML = '✅ <strong>SUCCESS:</strong> Metal syntax highlighting is working!<br><small>Check the colored code below</small>';
+                
+                // Show what languages are available
+                console.log('✅ highlight.js loaded successfully');
+                console.log('📋 Available languages:', hljs.listLanguages().join(', '));
+                console.log('🔧 Metal language registered:', hljs.getLanguage('metal') ? 'YES' : 'NO');
+                
+                // Highlight a test to confirm
+                const testCode = 'kernel void test() { float x = 1.0f; }';
+                const result = hljs.highlight(testCode, { language: 'metal' });
+                console.log('🎨 Test highlight:', result.value);
+            }
+        } catch (e) {
+            statusDiv.className = 'status error';
+            statusDiv.innerHTML = '❌ <strong>ERROR:</strong> ' + e.message;
+            console.error('Error:', e);
+        }
+    </script>
+</body>
+</html>
+

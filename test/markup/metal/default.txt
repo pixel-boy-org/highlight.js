@@ -1,0 +1,50 @@
+// Vertex shader
+#include <metal_stdlib>
+using namespace metal;
+
+struct VertexIn {
+    float3 position [[attribute(0)]];
+    float3 normal [[attribute(1)]];
+    float2 texCoord [[attribute(2)]];
+};
+
+struct VertexOut {
+    float4 position [[position]];
+    float3 worldNormal;
+    float2 texCoord;
+};
+
+vertex VertexOut vertexShader(VertexIn in [[stage_in]],
+                               constant float4x4 &modelMatrix [[buffer(1)]],
+                               constant float4x4 &viewProjectionMatrix [[buffer(2)]]) {
+    VertexOut out;
+    float4 worldPosition = modelMatrix * float4(in.position, 1.0);
+    out.position = viewProjectionMatrix * worldPosition;
+    out.worldNormal = normalize((modelMatrix * float4(in.normal, 0.0)).xyz);
+    out.texCoord = in.texCoord;
+    return out;
+}
+
+// Fragment shader
+fragment half4 fragmentShader(VertexOut in [[stage_in]],
+                               texture2d<half> colorTexture [[texture(0)]],
+                               sampler textureSampler [[sampler(0)]],
+                               constant float3 &lightDirection [[buffer(0)]]) {
+    half4 colorSample = colorTexture.sample(textureSampler, in.texCoord);
+    
+    float3 normal = normalize(in.worldNormal);
+    float diffuseIntensity = saturate(dot(normal, -lightDirection));
+    
+    half3 diffuseColor = colorSample.rgb * diffuseIntensity;
+    return half4(diffuseColor, colorSample.a);
+}
+
+// Kernel compute shader
+kernel void computeShader(device float4 *outBuffer [[buffer(0)]],
+                          constant float &time [[buffer(1)]],
+                          uint2 gid [[thread_position_in_grid]]) {
+    uint index = gid.x + gid.y * 1024;
+    float value = sin(time + float(index) * 0.1h);
+    outBuffer[index] = float4(value, value, value, 1.0f);
+}
+
