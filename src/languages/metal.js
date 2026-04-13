@@ -110,17 +110,14 @@ export default function(hljs) {
   // Metal-specific keywords
   const METAL_KEYWORDS = [
     'alignas', 'alignof', 'and', 'and_eq', 'asm', 'auto', 'bitand', 'bitor', 'bool', 'break', 'case',
-    'catch', 'char', 'char8_t', 'char16_t', 'char32_t', 'class', 'compl', 'concept', 'const', 
-    'constant', // Metal-specific address space qualifier
+    'catch', 'char', 'char8_t', 'char16_t', 'char32_t', 'class', 'compl', 'concept', 'const',
     'consteval', 'constexpr', 'constinit', 'const_cast', 'continue', 'decltype', 'default', 'delete',
-    'device', // Metal-specific address space qualifier
     'do', 'double', 'dynamic_cast', 'else', 'enum', 'explicit', 'export', 'extern', 'false',
     'float', 'for', 'friend', 'goto', 'if', 'inline', 'int', 'long', 'mutable', 'namespace', 'new',
     'noexcept', 'not', 'not_eq', 'nullptr', 'operator', 'or', 'or_eq', 'private', 'protected', 'public',
     'register', 'reinterpret_cast', 'requires', 'return', 'short', 'signed', 'sizeof', 'static',
-    'static_assert', 'static_cast', 'struct', 'switch', 'template', 'this', 
-    'thread', // Metal-specific address space qualifier
-    'throw', 'true', 'try', 'typedef', 'typeid', 'typename', 'union', 'unsigned', 'using', 'void', 
+    'static_assert', 'static_cast', 'struct', 'switch', 'template', 'this',
+    'throw', 'true', 'try', 'typedef', 'typeid', 'typename', 'union', 'unsigned', 'using', 'void',
     'volatile', 'wchar_t', 'while', 'xor', 'xor_eq'
   ];
 
@@ -169,9 +166,13 @@ export default function(hljs) {
     'sampler'
   ];
 
-  // Metal address space and atomic types
+  // Metal address space qualifiers (keywords, not types)
+  const METAL_ADDRESS_SPACE = [
+    'device', 'constant', 'thread', 'threadgroup', 'threadgroup_imageblock'
+  ];
+
+  // Metal atomic types
   const METAL_SPECIAL_TYPES = [
-    'device', 'constant', 'thread', 'threadgroup', 'threadgroup_imageblock',
     'atomic_int', 'atomic_uint', 'atomic_bool'
   ];
 
@@ -255,7 +256,7 @@ export default function(hljs) {
   const FUNCTION_TITLE = regex.optional(NAMESPACE_RE) + hljs.IDENT_RE + '\\s*\\(';
 
   const METAL_KEYWORDS_MODE = {
-    keyword: METAL_KEYWORDS,
+    keyword: METAL_KEYWORDS.concat(METAL_ADDRESS_SPACE),
     type: METAL_SCALAR_TYPES.concat(METAL_SPECIAL_TYPES),
     literal: LITERALS,
     built_in: METAL_BUILT_INS.concat(METAL_ATTRIBUTES)
@@ -263,11 +264,11 @@ export default function(hljs) {
 
   // Attribute syntax [[attribute_name]]
   const ATTRIBUTE_MODE = {
-    className: 'meta',
+    className: 'attr',
     begin: /\[\[/,
     end: /\]\]/,
     keywords: {
-      keyword: METAL_ATTRIBUTES
+      attr: METAL_ATTRIBUTES
     },
     contains: [
       hljs.C_NUMBER_MODE,
@@ -289,6 +290,27 @@ export default function(hljs) {
       regex.lookahead(/(<[^<>]+>|)\s*\(/))
   };
 
+  const OPERATORS = {
+    className: 'operator',
+    begin: /(?<!\/)\/(?![/*])|[+\-%&|^~!=<>]=?|&&|\|\||<<|>>|\?|(?::(?!:))|(?<![/])\*(?!\/)/,
+    relevance: 0
+  };
+
+  // Vector swizzle access: .xy, .rgba, .stpq (1-4 components)
+  // Lookbehind for the dot so it stays unclassed punctuation.
+  const SWIZZLE = {
+    className: 'type-vector',
+    begin: /(?<=\.)[xyzwrgbastpq]{1,4}\b/,
+    relevance: 0
+  };
+
+  // Known method calls on textures/objects: .sample(, .read(, .write(, etc.
+  const MEMBER_BUILTIN = {
+    className: 'built_in',
+    begin: /(?<=\.)(?:sample|read|write|gather|gather_compare|sample_compare|get_width|get_height|get_depth|get_num_mip_levels|get_num_samples)\s*(?=\()/,
+    relevance: 0
+  };
+
   const EXPRESSION_CONTAINS = [
     FUNCTION_DISPATCH,
     PREPROCESSOR,
@@ -298,6 +320,9 @@ export default function(hljs) {
     VECTOR_TYPE,
     TEXTURE_TYPE,
     METAL_TYPE_MODES,
+    SWIZZLE,
+    MEMBER_BUILTIN,
+    OPERATORS,
     C_LINE_COMMENT_MODE,
     hljs.C_BLOCK_COMMENT_MODE,
     NUMBERS,
