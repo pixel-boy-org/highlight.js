@@ -3,48 +3,47 @@
 <span class="hljs-keyword">using</span> <span class="hljs-keyword">namespace</span> metal;
 
 <span class="hljs-keyword">struct</span> <span class="hljs-title class_">VertexIn</span> {
-    <span class="hljs-type-vector">float3</span> <span class="hljs-built_in">position</span> <span class="hljs-meta">[[attribute(<span class="hljs-number">0</span>)]]</span>;
-    <span class="hljs-type-vector">float3</span> normal <span class="hljs-meta">[[attribute(<span class="hljs-number">1</span>)]]</span>;
-    <span class="hljs-type-vector">float2</span> texCoord <span class="hljs-meta">[[attribute(<span class="hljs-number">2</span>)]]</span>;
+    <span class="hljs-type-vector">float3</span> <span class="hljs-built_in">position</span> <span class="hljs-attr">[[attribute(<span class="hljs-number">0</span>)]]</span>;
+    <span class="hljs-type-vector">float3</span> normal <span class="hljs-attr">[[attribute(<span class="hljs-number">1</span>)]]</span>;
+    <span class="hljs-type-vector">float2</span> texCoord <span class="hljs-attr">[[attribute(<span class="hljs-number">2</span>)]]</span>;
 };
 
 <span class="hljs-keyword">struct</span> <span class="hljs-title class_">VertexOut</span> {
-    <span class="hljs-type-vector">float4</span> <span class="hljs-built_in">position</span> <span class="hljs-meta">[[<span class="hljs-keyword">position</span>]]</span>;
+    <span class="hljs-type-vector">float4</span> <span class="hljs-built_in">position</span> <span class="hljs-attr">[[<span class="hljs-attr">position</span>]]</span>;
     <span class="hljs-type-vector">float3</span> worldNormal;
     <span class="hljs-type-vector">float2</span> texCoord;
 };
 
-<span class="hljs-function"><span class="hljs-built_in">vertex</span> VertexOut <span class="hljs-title">vertexShader</span><span class="hljs-params">(VertexIn in <span class="hljs-meta">[[<span class="hljs-keyword">stage_in</span>]]</span>,
-                               <span class="hljs-type">constant</span> <span class="hljs-type-matrix">float4x4</span> &amp;modelMatrix <span class="hljs-meta">[[<span class="hljs-keyword">buffer</span>(<span class="hljs-number">1</span>)]]</span>,
-                               <span class="hljs-type">constant</span> <span class="hljs-type-matrix">float4x4</span> &amp;viewProjectionMatrix <span class="hljs-meta">[[<span class="hljs-keyword">buffer</span>(<span class="hljs-number">2</span>)]]</span>)</span> </span>{
+<span class="hljs-function"><span class="hljs-built_in">vertex</span> VertexOut <span class="hljs-title">vertexShader</span><span class="hljs-params">(VertexIn in <span class="hljs-attr">[[<span class="hljs-attr">stage_in</span>]]</span>,
+                               <span class="hljs-keyword">constant</span> <span class="hljs-type-matrix">float4x4</span> &amp;modelMatrix <span class="hljs-attr">[[<span class="hljs-attr">buffer</span>(<span class="hljs-number">1</span>)]]</span>,
+                               <span class="hljs-keyword">constant</span> <span class="hljs-type-matrix">float4x4</span> &amp;viewProjectionMatrix <span class="hljs-attr">[[<span class="hljs-attr">buffer</span>(<span class="hljs-number">2</span>)]]</span>)</span> </span>{
     VertexOut out;
-    <span class="hljs-type-vector">float4</span> worldPosition = modelMatrix * <span class="hljs-type-vector">float4</span>(in.<span class="hljs-built_in">position</span>, <span class="hljs-number">1.0</span>);
-    out.<span class="hljs-built_in">position</span> = viewProjectionMatrix * worldPosition;
-    out.worldNormal = <span class="hljs-built_in">normalize</span>((modelMatrix * <span class="hljs-type-vector">float4</span>(in.normal, <span class="hljs-number">0.0</span>)).xyz);
+    <span class="hljs-type-vector">float4</span> worldPosition = modelMatrix <span class="hljs-operator">*</span> <span class="hljs-type-vector">float4</span>(in.<span class="hljs-built_in">position</span>, <span class="hljs-number">1.0</span>);
+    out.<span class="hljs-built_in">position</span> = viewProjectionMatrix <span class="hljs-operator">*</span> worldPosition;
+    out.worldNormal = <span class="hljs-built_in">normalize</span>((modelMatrix <span class="hljs-operator">*</span> <span class="hljs-type-vector">float4</span>(in.normal, <span class="hljs-number">0.0</span>)).<span class="hljs-type-vector">xyz</span>);
     out.texCoord = in.texCoord;
     <span class="hljs-keyword">return</span> out;
 }
 
 <span class="hljs-comment">// Fragment shader</span>
-<span class="hljs-function"><span class="hljs-built_in">fragment</span> <span class="hljs-type-vector">half4</span> <span class="hljs-title">fragmentShader</span><span class="hljs-params">(VertexOut in <span class="hljs-meta">[[<span class="hljs-keyword">stage_in</span>]]</span>,
-                               <span class="hljs-type-texture">texture2d</span>&lt;<span class="hljs-type">half</span>&gt; colorTexture <span class="hljs-meta">[[<span class="hljs-keyword">texture</span>(<span class="hljs-number">0</span>)]]</span>,
-                               <span class="hljs-type-texture">sampler</span> textureSampler <span class="hljs-meta">[[<span class="hljs-keyword">sampler</span>(<span class="hljs-number">0</span>)]]</span>,
-                               <span class="hljs-type">constant</span> <span class="hljs-type-vector">float3</span> &amp;lightDirection <span class="hljs-meta">[[<span class="hljs-keyword">buffer</span>(<span class="hljs-number">0</span>)]]</span>)</span> </span>{
+<span class="hljs-function"><span class="hljs-built_in">fragment</span> <span class="hljs-type-vector">half4</span> <span class="hljs-title">fragmentShader</span><span class="hljs-params">(VertexOut in <span class="hljs-attr">[[<span class="hljs-attr">stage_in</span>]]</span>,
+                               <span class="hljs-type-texture">texture2d</span>&lt;<span class="hljs-type">half</span>&gt; colorTexture <span class="hljs-attr">[[<span class="hljs-attr">texture</span>(<span class="hljs-number">0</span>)]]</span>,
+                               <span class="hljs-type-texture">sampler</span> textureSampler <span class="hljs-attr">[[<span class="hljs-attr">sampler</span>(<span class="hljs-number">0</span>)]]</span>,
+                               <span class="hljs-keyword">constant</span> <span class="hljs-type-vector">float3</span> &amp;lightDirection <span class="hljs-attr">[[<span class="hljs-attr">buffer</span>(<span class="hljs-number">0</span>)]]</span>)</span> </span>{
     <span class="hljs-type-vector">half4</span> colorSample = colorTexture.<span class="hljs-built_in">sample</span>(textureSampler, in.texCoord);
     
     <span class="hljs-type-vector">float3</span> normal = <span class="hljs-built_in">normalize</span>(in.worldNormal);
-    <span class="hljs-type">float</span> diffuseIntensity = <span class="hljs-built_in">saturate</span>(<span class="hljs-built_in">dot</span>(normal, -lightDirection));
+    <span class="hljs-type">float</span> diffuseIntensity = <span class="hljs-built_in">saturate</span>(<span class="hljs-built_in">dot</span>(normal, <span class="hljs-operator">-</span>lightDirection));
     
-    <span class="hljs-type-vector">half3</span> diffuseColor = colorSample.rgb * diffuseIntensity;
-    <span class="hljs-keyword">return</span> <span class="hljs-built_in">half4</span>(diffuseColor, colorSample.a);
+    <span class="hljs-type-vector">half3</span> diffuseColor = colorSample.<span class="hljs-type-vector">rgb</span> <span class="hljs-operator">*</span> diffuseIntensity;
+    <span class="hljs-keyword">return</span> <span class="hljs-built_in">half4</span>(diffuseColor, colorSample.<span class="hljs-type-vector">a</span>);
 }
 
 <span class="hljs-comment">// Kernel compute shader</span>
-<span class="hljs-function"><span class="hljs-built_in">kernel</span> <span class="hljs-type">void</span> <span class="hljs-title">computeShader</span><span class="hljs-params">(<span class="hljs-type">device</span> <span class="hljs-type-vector">float4</span> *outBuffer <span class="hljs-meta">[[<span class="hljs-keyword">buffer</span>(<span class="hljs-number">0</span>)]]</span>,
-                          <span class="hljs-type">constant</span> <span class="hljs-type">float</span> &amp;time <span class="hljs-meta">[[<span class="hljs-keyword">buffer</span>(<span class="hljs-number">1</span>)]]</span>,
-                          <span class="hljs-type-vector">uint2</span> gid <span class="hljs-meta">[[thread_position_in_grid]]</span>)</span> </span>{
-    <span class="hljs-type">uint</span> index = gid.x + gid.y * <span class="hljs-number">1024</span>;
-    <span class="hljs-type">float</span> value = <span class="hljs-built_in">sin</span>(time + <span class="hljs-type">float</span>(index) * <span class="hljs-number">0.1h</span>);
+<span class="hljs-function"><span class="hljs-built_in">kernel</span> <span class="hljs-type">void</span> <span class="hljs-title">computeShader</span><span class="hljs-params">(<span class="hljs-keyword">device</span> <span class="hljs-type-vector">float4</span> *outBuffer <span class="hljs-attr">[[<span class="hljs-attr">buffer</span>(<span class="hljs-number">0</span>)]]</span>,
+                          <span class="hljs-keyword">constant</span> <span class="hljs-type">float</span> &amp;time <span class="hljs-attr">[[<span class="hljs-attr">buffer</span>(<span class="hljs-number">1</span>)]]</span>,
+                          <span class="hljs-type-vector">uint2</span> gid <span class="hljs-attr">[[thread_position_in_grid]]</span>)</span> </span>{
+    <span class="hljs-type">uint</span> index = gid.<span class="hljs-type-vector">x</span> <span class="hljs-operator">+</span> gid.<span class="hljs-type-vector">y</span> <span class="hljs-operator">*</span> <span class="hljs-number">1024</span>;
+    <span class="hljs-type">float</span> value = <span class="hljs-built_in">sin</span>(time <span class="hljs-operator">+</span> <span class="hljs-type">float</span>(index) <span class="hljs-operator">*</span> <span class="hljs-number">0.1h</span>);
     outBuffer[index] = <span class="hljs-type-vector">float4</span>(value, value, value, <span class="hljs-number">1.0f</span>);
 }
-
