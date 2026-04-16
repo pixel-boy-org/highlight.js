@@ -40,7 +40,10 @@ Use this document together with the upstream maintainer guide in `MAINTAINERS_GU
 12. If this release should ship in Apple apps, follow through immediately:
    - copy `build/highlight.min.js` into `Highlightr/src/assets/highlighter/highlight.min.js`
    - cut a new Highlightr fork release
-   - then update `pixel-boy-editor` to that Highlightr release
+   - then update `pixel-boy-editor/Package.swift` to that Highlightr release using the `exact:` version pin already used in the repo
+   - resolve and commit `pixel-boy-editor/Package.resolved`
+   - expect `pixel-boy/Package.resolved` to churn when the host app next resolves that updated local package
+   - follow the concrete downstream package steps in `Highlightr/RELEASE.md`
 
 ## Upstream Sync Notes
 
