@@ -1,3 +1,16 @@
+## Version 11.11.1-pb.1
+
+Pixel Boy fork release based on upstream 11.11.1.
+
+New Grammars:
+
+- add Metal grammar
+
+Core Grammars:
+
+- improve Metal grammar tokenization
+
+
 ## Version 11.11.2
 
 Themes:
